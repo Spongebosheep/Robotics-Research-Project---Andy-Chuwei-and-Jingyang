@@ -92,6 +92,7 @@ The prototype supports **two runtime localization modes** and one calibration mo
 
 This means the repository is not only about simulation-based layout search; it also contains a **working hardware inference layer** for physical validation.
 For a visual overview of the hardware experiment, see the accompanying YouTube demonstration video: [Detailed Experiment Video](https://youtu.be/zfnjO2ME83k).
+
 ---
 
 ## Objective function
@@ -621,6 +622,7 @@ python run_symmetric_layout_candidate.py --quick
 ```
 
 ### Physical prototype workflow
+
 Run from the repository root:
 
 ```bash
