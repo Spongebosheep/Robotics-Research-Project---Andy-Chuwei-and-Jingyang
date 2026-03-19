@@ -186,7 +186,7 @@ Notes:
 
 ---
 
-## Main workflow in `LayoutStudy/LayoutStudy/`
+## Main workflow in `LayoutStudy/`
 
 This is the part to use if you want the full search-and-analysis pipeline.
 
