@@ -91,7 +91,7 @@ The prototype supports **two runtime localization modes** and one calibration mo
    Guides the user through repeated taps at each calibration point, stores valid features, rejects outliers, and builds a reusable JSON calibration map.
 
 This means the repository is not only about simulation-based layout search; it also contains a **working hardware inference layer** for physical validation.
-The accompanying YouTube demonstration video shows the physical prototype setup, signal transmission path, controlled drop testing, mapping-based calibration idea, and the progression from flat-ground testing to sloped-surface and simulation-guided layout validation: [Detailed Experiment video](https://youtu.be/zfnjO2ME83k).
+For a visual overview of the hardware experiment, see the accompanying YouTube demonstration video: [Detailed Experiment Video](https://youtu.be/zfnjO2ME83k).
 ---
 
 ## Objective function
@@ -482,6 +482,7 @@ and streams baseline-relative channel responses over serial as comma-separated v
 
 This script is intended as a quick hardware-response check rather than a full localization firmware. Its main purpose is to verify that all sensor channels are connected correctly, 
 that controlled impacts produce observable multi-channel responses, and that the ESP32-to-PC serial path is functioning before running the full Python GUI pipeline.
+
 ---
 
 ## Bundled result folders
