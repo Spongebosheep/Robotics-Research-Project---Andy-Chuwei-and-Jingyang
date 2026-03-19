@@ -1,0 +1,60 @@
+Complete layout feature analysis summary
+========================================================================
+coarse_csv: C:\Users\chuwe\OneDrive\桌面\RRP-Simulation\LayoutStudy\LayoutStudy\Result\random_layout_5000_all_results.csv
+reeval_csv: C:\Users\chuwe\OneDrive\桌面\RRP-Simulation\LayoutStudy\LayoutStudy\Result\reeval_top50_summary.csv
+coarse_rows_raw: 5000
+coarse_rows_filtered: 4975
+reeval_rows: 50
+
+Top features | all5000 filtered | Spearman
+  - mean_dist_to_boundary: spearman_rho=-0.3728
+  - mean_radius: spearman_rho=0.3156
+  - mean_pairwise_dist: spearman_rho=0.2780
+  - fraction_near_boundary_0p15L: spearman_rho=0.2685
+  - fraction_near_boundary_0p1L: spearman_rho=0.2411
+  - convex_hull_perimeter: spearman_rho=0.2254
+
+Random forest priority | all5000 filtered
+  - mean_dist_to_boundary: perm=0.000972, mdi=0.206137
+  - nearest_neighbor_mean: perm=0.000319, mdi=0.078930
+  - nearest_neighbor_std: perm=0.000284, mdi=0.088870
+  - min_pairwise_dist: perm=0.000271, mdi=0.074804
+  - mean_radius: perm=0.000254, mdi=0.065419
+  - angular_gap_std: perm=0.000180, mdi=0.065080
+
+Top features | reeval top50 | Spearman
+  - min_pairwise_dist: spearman_rho=-0.3148
+  - fraction_near_boundary_0p1L: spearman_rho=0.2215
+  - angular_gap_std: spearman_rho=-0.2197
+  - anisotropy: spearman_rho=-0.2181
+  - min_dist_to_boundary: spearman_rho=-0.2122
+  - std_radius: spearman_rho=-0.2067
+
+Random forest priority | reeval top50
+  - min_pairwise_dist: perm=0.000061, mdi=0.274142
+  - std_radius: perm=0.000028, mdi=0.135841
+  - min_dist_to_boundary: perm=0.000021, mdi=0.124048
+  - angular_gap_std: perm=0.000010, mdi=0.086207
+  - nearest_neighbor_std: perm=0.000007, mdi=0.053508
+  - nearest_neighbor_mean: perm=0.000007, mdi=0.060881
+
+Terrain-specific analyses generated
+  - all5000_filtered:flat_J_t
+  - all5000_filtered:hill_J_t
+  - all5000_filtered:rough_J_t
+  - reeval_top50:flat_J_t
+  - reeval_top50:hill_J_t
+  - reeval_top50:rough_J_t
+
+Important new outputs
+  - pair_*.png : 关键二维几何特征图
+  - rf_importance_*.csv / bar_rf_*.png : 随机森林特征优先级
+  - top10_layouts_*.png : top10 layout 真图
+  - top10_geometry_profiles_*.png : top10 的最小间距/靠边比例/半径/角间隔对比
+  - binned_*.csv / binned_*.png : 非线性分箱分析
+
+Features with same sign in coarse and reeval Spearman
+  - min_pairwise_dist: coarse_rho=-0.2129, reeval_rho=-0.3148
+  - nearest_neighbor_std: coarse_rho=0.1368, reeval_rho=0.1571
+  - nearest_neighbor_mean: coarse_rho=-0.1362, reeval_rho=-0.0755
+  - convex_hull_perimeter: coarse_rho=-0.1112, reeval_rho=-0.0320
