@@ -3,14 +3,15 @@ Optimal Deployment of Seismic Sensor Nodes for Planetary Surface Monitoring
 
 # RRP-Simulation
 
-A research-style Python project for **terrain-aware sensor-layout evaluation and optimization** for **TDoA-based source localization**.
+A research-style Python project for **terrain-aware sensor-layout evaluation and optimization** for **TDoA-based source localization**, plus a **live physical prototype** for real-time impact sensing on an 8-sensor net.
 
-The repository contains two connected parts:
+The repository now contains **three connected layers**:
 
 1. **`Initial-simulation/`** – a step-by-step development history of the simulation model, from a minimal geometry-only baseline to a more realistic terrain-constrained, geodesic, amplitude-aware, fairness-controlled, and robustness-tested pipeline.
 2. **`LayoutStudy/`** – the main reusable workflow for searching, reevaluating, optimizing, and analyzing **8-node sensor layouts** under multiple terrain realizations.
+3. **`physical_prototype.py`** – a real-time prototype GUI for the physical net, reading 8-channel sensor data from an ESP32 over serial, detecting impact events, and estimating impact position using either a physics-based solver or a calibration-template mapping mode.
 
-The core idea is simple:
+The core idea is:
 
 - start from a 2D candidate sensor layout,
 - deploy it onto a terrain surface while approximately preserving the nominal net geometry,
@@ -18,11 +19,14 @@ The core idea is simple:
 - generate noisy arrival-time/TDoA observations,
 - recover the source location from those observations,
 - score the layout by localization accuracy, robustness, and deployment deformation,
-- then search for better layouts.
+- then search for better layouts,
+- and finally test the idea on a real prototype with live sensor streams.
 
 ---
 
-## What the model does
+## What the project does
+
+### Simulation / layout-design side
 
 For each candidate layout, the code evaluates performance on several terrain types (`flat`, `hill`, `rough`). The evaluation pipeline is:
 
@@ -59,11 +63,37 @@ For each candidate layout, the code evaluates performance on several terrain typ
 7. **Metric aggregation**  
    Performance is aggregated per terrain and then into a universal layout score.
 
+### Physical prototype side
+
+The real prototype script turns the research idea into a live demonstration system:
+
+- reads **8 analog channels** from an ESP32 through serial,
+- maintains a rolling baseline and detects impact events,
+- extracts first-arrival times and peak amplitudes from each event,
+- estimates location in an extended search area around a **70 x 70 central net**,
+- visualizes sensors, calibration points, and predicted impact position in a PyQtGraph GUI.
+
+The prototype supports **two runtime localization modes** and one calibration mode:
+
+1. **Physics-based localization**  
+   Searches over a 2D grid and a bank of wave-speed candidates, then minimizes a score combining:
+   - relative arrival-time mismatch,
+   - amplitude-pattern mismatch,
+   - arrival-order mismatch.
+
+2. **Template mapping localization**  
+   Uses manually collected calibration taps at predefined positions outside the net, builds robust pairwise time-difference templates, and matches new events against those templates.
+
+3. **Mapping calibration mode**  
+   Guides the user through repeated taps at each calibration point, stores valid features, rejects outliers, and builds a reusable JSON calibration map.
+
+This means the repository is not only about simulation-based layout search; it also contains a **working hardware inference layer** for physical validation.
+
 ---
 
 ## Objective function
 
-The main scoring logic lives in:
+The main scoring logic for the simulation study lives in:
 
 - `LayoutStudy/layout_objective_evaluator.py`
 
@@ -115,17 +145,18 @@ RRP-Simulation/
 │   ├── Step9/
 │   ├── Step10/
 │   └── Step11/
-└── └── LayoutStudy/
-    ├── RunThis(TopLayer).py
-    ├── layout_objective_evaluator.py
-    ├── reevaluate_top50_layouts.py
-    ├── cmaes_optimize_from_top_seeds.py
-    ├── analyze_layout_features_complete.py
-    ├── run_symmetric_layout_candidate.py
-    ├── Result/
-    ├── feature_analysis_complete/
-    ├── single_layout_symmetric_eval/
-    └── Legacy/
+├── LayoutStudy/
+│   ├── RunThis(TopLayer).py
+│   ├── layout_objective_evaluator.py
+│   ├── reevaluate_top50_layouts.py
+│   ├── cmaes_optimize_from_top_seeds.py
+│   ├── analyze_layout_features_complete.py
+│   ├── run_symmetric_layout_candidate.py
+│   ├── Result/
+│   ├── feature_analysis_complete/
+│   ├── single_layout_symmetric_eval/
+│   └── Legacy/
+└── physical_prototype.py
 ```
 
 ---
@@ -261,11 +292,142 @@ Outputs are saved under:
 
 ---
 
+## Physical prototype: architecture and logic
+
+The physical prototype code is a standalone real-time application intended for the **actual 8-sensor net**.
+
+### Hardware and signal assumptions
+
+The script assumes:
+
+- **8 sensor channels**,
+- serial streaming at **115200 baud**,
+- one row per sample containing **8 comma-separated numeric values**,
+- an ESP32-side pin mapping for sensors `S1` to `S8`,
+- a sampling rate of **800 Hz**,
+- sensor coordinates fixed in a measured local layout that is then shifted into a larger global search frame.
+
+A central design choice is that the searchable area is **larger than the net itself**:
+
+- outer search domain: `x, y in [-20, 120]`,
+- physical net domain: `70 x 70`, offset to `[15, 85] x [15, 85]`.
+
+This allows the GUI to predict impacts both **inside the net** and **outside the net boundary**, which matches the calibration strategy used later in the script.
+
+### Real-time event pipeline
+
+For every incoming batch of serial data, the script does the following:
+
+1. **Read and clean rows**  
+   Ignores malformed rows, comments, headers, and incomplete packets.
+
+2. **Maintain baseline**  
+   Stores quiet-time samples in a rolling baseline buffer and estimates baseline with a per-channel median.
+
+3. **Trigger event capture**  
+   Starts event capture when the maximum relative response exceeds a trigger threshold and at least two channels rise above a secondary threshold.
+
+4. **Analyze captured event**  
+   Computes:
+   - per-channel local baseline,
+   - robust noise estimate,
+   - positive signal envelope,
+   - peak amplitude,
+   - first threshold-crossing arrival time.
+
+5. **Reject weak events**  
+   Events are discarded if too few channels have meaningful peaks or valid arrivals.
+
+6. **Localize event**  
+   Depending on the mode, the event is routed to either:
+   - mapping calibration,
+   - mapping-template runtime localization,
+   - physics-based runtime localization.
+
+7. **Update GUI**  
+   The plot refreshes live sensor intensity, predicted impact position, mapping-point state, and diagnostic text such as score, velocity estimate, and arrivals.
+
+### Physics-based runtime localization
+
+When mapping mode is not enabled, the script performs brute-force localization over a 2D search grid.
+
+For each candidate point it computes:
+
+- distance from candidate point to each valid sensor,
+- a predicted amplitude pattern using inverse-distance decay,
+- a predicted arrival-time pattern for each candidate propagation speed,
+- a composite score made from:
+  - time-difference error,
+  - amplitude mismatch,
+  - arrival-order rank error.
+
+The best `(x, y, v)` combination is retained.
+
+This solver is lightweight and practical for a prototype because it avoids explicit PDE modeling while still using three physically meaningful cues:
+
+- **when** each channel responds,
+- **how strongly** each channel responds,
+- **in what order** channels respond.
+
+### Mapping calibration and template matching
+
+A second inference mode is based on **empirical calibration**, which is useful when the real prototype behaves less ideally than the simulation.
+
+The mapping workflow is:
+
+1. The user taps a set of predefined calibration points.
+2. Each accepted event is converted into a pairwise arrival-time-difference feature vector.
+3. Multiple taps are collected per calibration point.
+4. Outliers are rejected using robust z-score filtering.
+5. A median template and spread are stored for each point.
+6. At runtime, a new event is matched against the saved templates.
+7. The top few template matches are combined by inverse-score weighting to interpolate position.
+
+In the current script, the calibration points are placed around the outside of the net:
+
+- `LT`, `LM`, `LB`,
+- `TM`,
+- `RT`, `RM`, `RB`,
+- `BM`.
+
+This makes the mapping mode especially suitable for **outside-impact classification/localization**.
+
+### GUI behavior
+
+The interface is implemented with **PyQt6 + PyQtGraph** and provides:
+
+- live visualization of sensor responses,
+- sensor labels and current values,
+- the central net boundary and larger outer boundary,
+- calibration-point markers and progress counters,
+- buttons for starting calibration, advancing points, building a map, saving a map, and loading a map,
+- a runtime checkbox to switch to mapping-based inference.
+
+The prototype script therefore acts as both:
+
+- a **demo/experiment tool**, and
+- a **debugging interface** for real hardware testing.
+
+### Relationship to the simulation study
+
+The physical prototype is conceptually downstream of the simulation work:
+
+- the simulation identifies promising 8-node layouts and studies geometry/performance trade-offs,
+- the prototype fixes one concrete sensor layout,
+- the runtime code tests whether arrival-time logic can work on real signals,
+- the mapping mode compensates for real-world effects not fully captured by the idealized forward model.
+
+So the repository can be read as a progression from:
+
+**simulation -> layout selection -> hardware implementation -> live localization**.
+
+---
+
 ## Key scripts and their roles
 
 ### `layout_objective_evaluator.py`
 
-This is the **core engine**. It contains:
+This is the **core simulation engine**. It contains:
 
 - layout validation,
 - terrain generation,
@@ -277,7 +439,7 @@ This is the **core engine**. It contains:
 - multi-start localization,
 - terrain summary and final objective calculation.
 
-If you only want one file to understand the project logic, start here.
+If you only want one file to understand the simulation logic, start here.
 
 ### `RunThis(TopLayer).py`
 
@@ -294,6 +456,20 @@ Searches locally around good seeds instead of relying only on random layouts.
 ### `analyze_layout_features_complete.py`
 
 Explains *why* some layouts perform better.
+
+### `physical_prototype.py`
+
+Top-level real-time prototype application for the physical system. It contains:
+
+- serial acquisition,
+- baseline and trigger logic,
+- event segmentation,
+- arrival/peak extraction,
+- brute-force physics-based localization,
+- mapping calibration and JSON map persistence,
+- live PyQt visualization.
+
+If you want to understand how the simulation idea was transferred into a working hardware demo, read this file after `layout_objective_evaluator.py`.
 
 ---
 
@@ -342,25 +518,35 @@ Contains outputs for a manually designed symmetric candidate layout.
 
 This is a script-based repository; there is no package installer.
 
-Use Python 3.10+ and install the main dependencies:
+Use Python 3.10+.
+
+### Simulation dependencies
 
 ```bash
 pip install numpy pandas matplotlib scipy scikit-learn
 ```
 
-No external CMA-ES dependency is required because the optimizer is implemented directly inside `cmaes_optimize_from_top_seeds.py`.
+### Physical prototype dependencies
+
+```bash
+pip install numpy pyserial PyQt6 pyqtgraph
+```
+
+If you want both environments available in one place, install the union of both dependency sets.
 
 ---
 
 ## Quick start
 
+### Simulation workflow
+
 Run commands from:
 
 ```bash
-cd LayoutStudy/LayoutStudy
+cd LayoutStudy
 ```
 
-### Coarse random search
+#### Coarse random search
 
 ```bash
 python "RunThis(TopLayer).py" \
@@ -374,7 +560,7 @@ python "RunThis(TopLayer).py" \
   --output-dir Result
 ```
 
-### Reevaluate the top 50 layouts
+#### Reevaluate the top 50 layouts
 
 ```bash
 python reevaluate_top50_layouts.py \
@@ -389,7 +575,7 @@ python reevaluate_top50_layouts.py \
   --rough-grid-n 65
 ```
 
-### Optimize top layouts with CMA-ES
+#### Optimize top layouts with CMA-ES
 
 ```bash
 python cmaes_optimize_from_top_seeds.py \
@@ -401,7 +587,7 @@ python cmaes_optimize_from_top_seeds.py \
   --n-seeds 5
 ```
 
-### Analyze geometry-performance relationships
+#### Analyze geometry-performance relationships
 
 ```bash
 python analyze_layout_features_complete.py \
@@ -410,7 +596,7 @@ python analyze_layout_features_complete.py \
   --outdir feature_analysis_complete
 ```
 
-### Evaluate the hand-designed symmetric layout
+#### Evaluate the hand-designed symmetric layout
 
 ```bash
 python run_symmetric_layout_candidate.py
@@ -422,9 +608,41 @@ For a faster sanity check:
 python run_symmetric_layout_candidate.py --quick
 ```
 
+### Physical prototype workflow
+
+Run from the repository root:
+
+```bash
+python physical_prototype.py
+```
+
+Before running, update the configuration section if needed:
+
+- `SERIAL_PORT`
+- `BAUD_RATE`
+- `DISABLED_SENSORS`
+- `sensor_coords_local`
+- trigger / arrival thresholds
+- search-grid size and velocity candidates
+
+Typical usage:
+
+1. Connect the ESP32 and start serial streaming.
+2. Launch the GUI.
+3. Verify that live channel values are updating.
+4. Use physics mode directly, or start mapping calibration.
+5. For mapping mode:
+   - click **Start mapping calibration**,
+   - tap each calibration point multiple times,
+   - click **Build map**,
+   - optionally save the map as JSON,
+   - enable **Use mapping at runtime**.
+
 ---
 
 ## Important modeling assumptions
+
+### Simulation assumptions
 
 - The domain is normalized to a unit square.
 - Layouts are mainly evaluated for **8 sensors**.
@@ -434,6 +652,14 @@ python run_symmetric_layout_candidate.py --quick
 - Detection is SNR-threshold-based in the later model stages.
 - Localization is performed on the terrain surface, not in unconstrained 3D space.
 
+### Prototype assumptions
+
+- The incoming serial stream already contains synchronized 8-channel sensor values.
+- The physical sensor order must match the hard-coded sensor coordinates.
+- Arrival extraction is threshold-based, so sensor gain/noise consistency matters.
+- Mapping-based localization depends on the quality and repeatability of calibration taps.
+- The current runtime configuration is especially oriented toward **outside-net** localization experiments.
+
 ---
 
 ## Practical reading order
@@ -441,8 +667,8 @@ python run_symmetric_layout_candidate.py --quick
 If you are new to the codebase, this is the most efficient order:
 
 1. `LayoutStudy/layout_objective_evaluator.py`  
-   Understand the full evaluation logic.
-2. `LayoutStudy/RunThis(TopLayer).py`  
+   Understand the full simulation and scoring logic.
+2. `LayoutStudy/LayoutStudy/RunThis(TopLayer).py`  
    See how candidate layouts are generated and ranked.
 3. `LayoutStudy/reevaluate_top50_layouts.py`  
    See how unstable coarse rankings are cleaned up.
@@ -450,8 +676,10 @@ If you are new to the codebase, this is the most efficient order:
    See how the search is refined.
 5. `LayoutStudy/analyze_layout_features_complete.py`  
    See how performance is interpreted.
-6. `Initial-simulation/`  
-   Read the historical steps only if you want to follow the model evolution from first principles.
+6. `physical_prototype.py`  
+   See how the selected layout and timing logic are used on real hardware.
+7. `Initial-simulation/`  
+   Read the historical steps if you want to follow the model evolution from first principles.
 
 ---
 
@@ -461,30 +689,37 @@ If you are new to the codebase, this is the most efficient order:
 - There is no automated test suite yet.
 - Some metadata files still contain original local Windows paths from the authoring environment.
 - Some scripts are computationally heavy at full settings.
-- The code is tightly centered on normalized 8-node layouts in a square domain.
+- The simulation code is tightly centered on normalized 8-node layouts in a square domain.
+- The prototype code currently hard-codes serial configuration, sensor coordinates, thresholds, and calibration points.
+- The prototype GUI is meant for lab/demo use rather than production deployment.
 
 ---
 
 ## Suggested next improvements
 
 - factor the common simulation code into a small reusable package,
-- add unit tests for terrain generation, deployment, and objective evaluation,
-- separate config from code via YAML/JSON,
+- move prototype configuration into a JSON/YAML file,
+- add unit tests for terrain generation, deployment, event parsing, and objective evaluation,
+- separate hardware IO from localization logic,
 - add a single master pipeline script,
 - store result metadata more consistently,
-- add notebooks or examples for visualization and reproducibility.
+- add notebooks or examples for visualization and reproducibility,
+- add documentation for the ESP32 firmware packet format.
 
 ---
 
 ## Summary
 
-This repository is best understood as a **complete experimental pipeline for terrain-aware layout design**:
+This repository is best understood as a **complete experimental pipeline for impact localization**:
 
-- it starts from physically constrained deployment,
-- uses geodesic-aware TDoA localization,
+- it starts from terrain-aware simulation and layout optimization,
+- uses geodesic-aware TDoA localization in the virtual study,
 - scores layouts with both accuracy and robustness terms,
 - compares layouts fairly through frozen Monte Carlo banks,
 - refines the best layouts by reevaluation and CMA-ES,
-- and finally analyzes which geometric features drive good performance.
+- then carries the chosen logic into a real 8-sensor prototype,
+- and supports live localization through both a physics-based solver and a calibration-template mode.
 
-If you are cloning the repo to reproduce the main logic, focus on the `LayoutStudy` folder first.
+So the full story of the repo is:
+
+**model the problem -> optimize layout -> analyze geometry -> build hardware -> localize real impacts**.
