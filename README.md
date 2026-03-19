@@ -1,6 +1,9 @@
 # Robotics-Research-Project---Andy-Chuwei-and-Jingyang
 Optimal Deployment of Seismic Sensor Nodes for Planetary Surface Monitoring
 
+# Demo Video
+A short YouTube demonstration video is also available, showing the 70 × 70 cm deformable sensor net, the 8 piezo sensors, the sensor-to-ESP32-to-computer signal path, the standardized 205 g drop test, flat-ground and sloped-surface experiments, the mapping-based calibration idea, and the final simulation-guided layout comparison: [Detailed Experiment Video](https://youtu.be/zfnjO2ME83k).
+
 # RRP-Simulation
 
 A research-style Python project for **terrain-aware sensor-layout evaluation and optimization** for **TDoA-based source localization**, plus a **live physical prototype** for real-time impact sensing on an 8-sensor net.
@@ -88,7 +91,7 @@ The prototype supports **two runtime localization modes** and one calibration mo
    Guides the user through repeated taps at each calibration point, stores valid features, rejects outliers, and builds a reusable JSON calibration map.
 
 This means the repository is not only about simulation-based layout search; it also contains a **working hardware inference layer** for physical validation.
-
+The accompanying YouTube demonstration video shows the physical prototype setup, signal transmission path, controlled drop testing, mapping-based calibration idea, and the progression from flat-ground testing to sloped-surface and simulation-guided layout validation: [Detailed Experiment video](https://youtu.be/zfnjO2ME83k).
 ---
 
 ## Objective function
@@ -474,9 +477,7 @@ If you want to understand how the simulation idea was transferred into a working
 
 ### `Test-waveform.ino`
 
-### `Test-waveform.ino`
-
-A lightweight ESP32-side diagnostic script for the physical prototype. It reads the same 8 analogue sensor channels used by physical_prototype, estimates a startup baseline for each channel, 
+A lightweight ESP32-side diagnostic script for the physical prototype. It reads the same 8 analogue sensor channels used by **`physical_prototype.py`**, estimates a startup baseline for each channel, 
 and streams baseline-relative channel responses over serial as comma-separated values at 115200 baud.
 
 This script is intended as a quick hardware-response check rather than a full localization firmware. Its main purpose is to verify that all sensor channels are connected correctly, 
@@ -619,7 +620,6 @@ python run_symmetric_layout_candidate.py --quick
 ```
 
 ### Physical prototype workflow
-
 Run from the repository root:
 
 ```bash
