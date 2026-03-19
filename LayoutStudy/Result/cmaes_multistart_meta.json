@@ -1,0 +1,38 @@
+{
+  "seed_csv": "c:\\Users\\chuwe\\OneDrive\\桌面\\RRP-Simulation\\LayoutStudy\\LayoutStudy\\Result\\reeval_top50_summary.csv",
+  "top_k_seeds": 5,
+  "terrain_kinds": [
+    "flat",
+    "hill",
+    "rough"
+  ],
+  "max_gens": 25,
+  "popsize": null,
+  "sigma0": 0.05,
+  "patience": 8,
+  "seed": 20260318,
+  "opt_eval": {
+    "N_EVENTS": 100,
+    "N_SEEDS": 5,
+    "GEO_GRID_N": 21,
+    "SEARCH_GRID_N": 7,
+    "N_MULTI_START": 3,
+    "ROUGH_GRID_N": 65,
+    "SIGMA_T": 0.002,
+    "TERRAIN_MASTER_SEED": 310001,
+    "MONTE_CARLO_BASE_SEED": 910001,
+    "HILL_RANDOMIZE": true,
+    "ROUGH_RANDOMIZE": true
+  },
+  "final_reeval": {
+    "repeats": 3,
+    "n_events": 200,
+    "n_seeds": 5,
+    "geo_grid_n": 21,
+    "search_grid_n": 7,
+    "n_multi_start": 3,
+    "rough_grid_n": 65,
+    "terrain_seed_base": 510001,
+    "mc_seed_base": 1110001
+  }
+}

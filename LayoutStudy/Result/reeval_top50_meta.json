@@ -1,0 +1,23 @@
+{
+  "input_csv": "c:\\Users\\chuwe\\OneDrive\\桌面\\RRP-Simulation\\LayoutStudy\\LayoutStudy\\Result\\random_layout_5000_all_results.csv",
+  "result_dir": "c:\\Users\\chuwe\\OneDrive\\桌面\\RRP-Simulation\\LayoutStudy\\LayoutStudy\\Result",
+  "top_k": 50,
+  "terrains": [
+    "flat",
+    "hill",
+    "rough"
+  ],
+  "n_events": 100,
+  "n_seeds": 5,
+  "n_repeats": 2,
+  "effective_blocks": 10,
+  "geo_grid_n": 21,
+  "search_grid_n": 7,
+  "n_multi_start": 3,
+  "rough_grid_n": 65,
+  "sigma_t": 0.002,
+  "terrain_master_base_seed": 310001,
+  "terrain_master_stride": 100003,
+  "mc_base_seed": 910001,
+  "mc_base_seed_stride": 100003
+}
