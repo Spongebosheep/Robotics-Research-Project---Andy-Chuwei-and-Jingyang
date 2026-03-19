@@ -156,7 +156,8 @@ RRP-Simulation/
 │   ├── feature_analysis_complete/
 │   ├── single_layout_symmetric_eval/
 │   └── Legacy/
-└── physical_prototype.py
+├── physical_prototype.py
+└── Test-waveform.ino
 ```
 
 ---
@@ -471,6 +472,15 @@ Top-level real-time prototype application for the physical system. It contains:
 
 If you want to understand how the simulation idea was transferred into a working hardware demo, read this file after `layout_objective_evaluator.py`.
 
+### `Test-waveform.ino`
+
+### `Test-waveform.ino`
+
+A lightweight ESP32-side diagnostic script for the physical prototype. It reads the same 8 analogue sensor channels used by physical_prototype, estimates a startup baseline for each channel, 
+and streams baseline-relative channel responses over serial as comma-separated values at 115200 baud.
+
+This script is intended as a quick hardware-response check rather than a full localization firmware. Its main purpose is to verify that all sensor channels are connected correctly, 
+that controlled impacts produce observable multi-channel responses, and that the ESP32-to-PC serial path is functioning before running the full Python GUI pipeline.
 ---
 
 ## Bundled result folders
