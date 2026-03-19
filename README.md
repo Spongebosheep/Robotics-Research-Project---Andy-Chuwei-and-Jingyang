@@ -8,7 +8,7 @@ A research-style Python project for **terrain-aware sensor-layout evaluation and
 The repository contains two connected parts:
 
 1. **`Initial-simulation/`** – a step-by-step development history of the simulation model, from a minimal geometry-only baseline to a more realistic terrain-constrained, geodesic, amplitude-aware, fairness-controlled, and robustness-tested pipeline.
-2. **`LayoutStudy/LayoutStudy/`** – the main reusable workflow for searching, reevaluating, optimizing, and analyzing **8-node sensor layouts** under multiple terrain realizations.
+2. **`LayoutStudy/`** – the main reusable workflow for searching, reevaluating, optimizing, and analyzing **8-node sensor layouts** under multiple terrain realizations.
 
 The core idea is simple:
 
@@ -65,7 +65,7 @@ For each candidate layout, the code evaluates performance on several terrain typ
 
 The main scoring logic lives in:
 
-- `LayoutStudy/LayoutStudy/layout_objective_evaluator.py`
+- `LayoutStudy/layout_objective_evaluator.py`
 
 For each terrain, the code computes a terrain-specific score:
 
@@ -115,18 +115,17 @@ RRP-Simulation/
 │   ├── Step9/
 │   ├── Step10/
 │   └── Step11/
-└── LayoutStudy/
-    └── LayoutStudy/
-        ├── RunThis(TopLayer).py
-        ├── layout_objective_evaluator.py
-        ├── reevaluate_top50_layouts.py
-        ├── cmaes_optimize_from_top_seeds.py
-        ├── analyze_layout_features_complete.py
-        ├── run_symmetric_layout_candidate.py
-        ├── Result/
-        ├── feature_analysis_complete/
-        ├── single_layout_symmetric_eval/
-        └── Legacy/
+└── └── LayoutStudy/
+    ├── RunThis(TopLayer).py
+    ├── layout_objective_evaluator.py
+    ├── reevaluate_top50_layouts.py
+    ├── cmaes_optimize_from_top_seeds.py
+    ├── analyze_layout_features_complete.py
+    ├── run_symmetric_layout_candidate.py
+    ├── Result/
+    ├── feature_analysis_complete/
+    ├── single_layout_symmetric_eval/
+    └── Legacy/
 ```
 
 ---
@@ -441,15 +440,15 @@ python run_symmetric_layout_candidate.py --quick
 
 If you are new to the codebase, this is the most efficient order:
 
-1. `LayoutStudy/LayoutStudy/layout_objective_evaluator.py`  
+1. `LayoutStudy/layout_objective_evaluator.py`  
    Understand the full evaluation logic.
-2. `LayoutStudy/LayoutStudy/RunThis(TopLayer).py`  
+2. `LayoutStudy/RunThis(TopLayer).py`  
    See how candidate layouts are generated and ranked.
-3. `LayoutStudy/LayoutStudy/reevaluate_top50_layouts.py`  
+3. `LayoutStudy/reevaluate_top50_layouts.py`  
    See how unstable coarse rankings are cleaned up.
-4. `LayoutStudy/LayoutStudy/cmaes_optimize_from_top_seeds.py`  
+4. `LayoutStudy/cmaes_optimize_from_top_seeds.py`  
    See how the search is refined.
-5. `LayoutStudy/LayoutStudy/analyze_layout_features_complete.py`  
+5. `LayoutStudy/analyze_layout_features_complete.py`  
    See how performance is interpreted.
 6. `Initial-simulation/`  
    Read the historical steps only if you want to follow the model evolution from first principles.
@@ -488,4 +487,4 @@ This repository is best understood as a **complete experimental pipeline for ter
 - refines the best layouts by reevaluation and CMA-ES,
 - and finally analyzes which geometric features drive good performance.
 
-If you are cloning the repo to reproduce the main logic, focus on the `LayoutStudy/LayoutStudy` folder first.
+If you are cloning the repo to reproduce the main logic, focus on the `LayoutStudy` folder first.
